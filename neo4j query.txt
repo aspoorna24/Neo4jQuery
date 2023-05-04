@@ -1,0 +1,18 @@
+1 Query to get Inusrer_demo covered by the InsuranceProvider_demo name:"Travelers Inc"
+
+Match (insuranceprovider:InsuranceProvider_demo{name:"{Travelers Inc.}"})-[:Offers]->(product:Product_demo)-[:OffersUnique]->(policy:Policy_demo)-[:covers]-(insurer:Inusrer_demo) return insuranceprovider,product,policy,insurer
+
+
+2 Query to get Claims by using the Policy_demo named : "POL10001"
+
+Match (policy:Policy_demo{name:"{POL10001}"})-[:covers]->(inuser:Inusrer_demo)-[:raises]->(claims:Claims_demo) return policy,inuser,claims
+
+
+3 The Product_demo "{Workers Compensation Insurance - SB}" which offers ploicy which is indirectlyRealted to Claims_demo
+
+Match (product:Product_demo{name:"{Workers Compensation Insurance - SB}"})-[:OffersUnique]->(policy:Policy_demo)<-[:IndirectlyRelatesTo]-(claim:Claims_demo) return product,policy,claim
+
+
+4 The number of Claims does individual Policy_demo covers
+
+Match (policy:Policy_demo)-[:covers]->(inuser:Inusrer_demo)-[:raises]->(claims:Claims_demo) return policy.name,count(claims)

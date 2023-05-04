@@ -1,0 +1,49 @@
+Basic
+
+- CREATE (a:Player{Name:"VIRAT"}),(b:Player{Name:"ROHIT"}) return a,b
+- Merge (a:Player{Name:"VIRAT"}) Merge(b:Player{Name:"ROHIT"}) return a,b
+
+
+- MATCH (a),(b) WHERE a.Name="VIRAT" AND b.Name="ROHIT" CREATE (a)-[:KNOWS]->(b) RETURN a,b
+
+- Match (n) where n.Name="VIRAT" return n
+
+- Foreach (i IN RANGE(0,10)|CREATE (n))
+
+- Match (n) return n
+
+- Match (n) detach delete n
+
+- Create (n:Player{Name:"VIRAT"}) return n
+- Merge (n:Player{Name:"VIRAT"}) return n
+
+- Merge (n:Player{Name:"VIRAT",team:"India"}) return n
+
+- Merge (n:Player{Name:"VIRAT",team:"India"}) Merge(n1:Player{Name:"ROHIT",team:"India"}) return n,n1
+
+- Call db.schema.visualization
+
+- MATCH(people:Person)-[relatedTo]-(:Movie {title: "Cloud Atlas"}) RETURN people.name, Type(relatedTo), relatedTo 
+
+- MATCH p=shortestPath((bacon:Person {name:"Kevin Bacon"})-[*]-(meg:Person {name:"Meg Ryan"})) RETURN p
+
+- LOAD CSV WITH HEADERS FROM "https://data.neo4j.com/northwind/products.csv" AS row
+  CREATE (n:Product)
+  SET n = row,
+  n.unitPrice = toFloat(row.unitPrice),
+  n.unitsInStock = toInteger(row.unitsInStock), n.unitsOnOrder = toInteger(row.unitsOnOrder),
+  n.reorderLevel = toInteger(row.reorderLevel), n.discontinued = (row.discontinued <> "0")
+
+- LOAD CSV WITH HEADERS from 'file:///insurance_v2.csv' as row 
+  MERGE (n:Product{Name:row.Product}) 
+  MERGE (c:Coverage{Name:row.Coverage})
+  MERGE (e:Event{Name:row.Event})
+  MERGE (p:Person{Name:row.Person})
+  Merge (o:Object{Name:row.Object})
+  Merge (d:Damage{Name:row.Damage})
+  Merge (n)-[:IS_CONTAINS]->(c)
+  Merge (c)-[:COVERS]-(d)
+  Merge (e)-[:LEADS_TO]->(d)
+  Merge (e)-[:INVOLVES]->(o)
+  Merge (p)-[:CAUSES]->(e)
+  Merge (p)-[:OWS]->(o)

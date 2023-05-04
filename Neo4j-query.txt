@@ -1,0 +1,133 @@
+- MATCH (p:Patient{PatientID:"0061"})-[:TREATED_WITH]->(t:Treatment) return t.Name
+or
+- MATCH (p:Patient{PatientID:"0061"})-[:TREATED_WITH]->(t) return t.Name
+
+
+- Match (p:Problem{Name:"Respiratory Failure"})<-[:DIAGNOSED_FOR]-(P) return P
+
+- Match (p:Patient)-[:TESTED_WITH]-(t) where date(p.DischargeDate).year =1995 return p,t 
+
+- MATCH (m:Movie) REMOVE m.tagline RETURN  m
+
+- MATCH (m:Movie {title: 'Get Out'}) SET  m.tagline = 'Gripping, scary, witty and timely!', m.released = 2017
+
+- MERGE (p:Person {name: 'Lucille Ball'})-[:ACTED_IN]->(m:Movie {title: 'Forever, Darling'})
+
+- MERGE (p:Person {name: 'Lucille Ball'}} ON MATCH SET p.born = 1911 RETURN p
+
+ON MATCH is the correct answer. We want the property set when the Lucille Ball node is found in the graph.
+You use ON CREATE for behavior to execute if the node is created.
+There are no ON UPDATE ot ON FOUND clauses in Cypher.
+
+- MATCH (p:Person {name: 'River Phoenix'}) DETACH DELETE p
+
+- MATCH (n) DETACH DELETE n
+
+MATCH (n) DETACH DELETE n is the correct answer as it first deletes relationships to/from a node, then the node.
+MATCH (n) DELETE n will fail because you cannot delete nodes without first deleting the relationships.
+There are no such clauses DELETE NODES, RELATIONSHIPS and DELETE ALL in Cypher
+
+
+- MATCH (p:Person)-[r:DIRECTED]->(m:Movie) WHERE r.role IS NOT NULL AND m.year = 2015 RETURN p.name, r.role, m.title
+
+- Match (p:Patient)-[:TREATED_WITH]->(t:Treatment)-[:TreatmentImprovesProblem]->(pr:Problem) where date(p.DOB).year=2016 return distinct p.PatientID
+
+- MATCH (m:Movie) WHERE m.tmdbId IS NULL RETURN m
+
+- Match (p:Patient) where p.DischargeDate is null return p
+
+- MATCH (p:Person)  WHERE p:Actor AND p:Director  AND  1950 <= p.born.year < 1960  RETURN p.name, labels(p), p.born
+
+- MATCH (p:Director)-[:DIRECTED]->(m:Movie)<-[:ACTED_IN]-(p) WHERE "German" IN m.languages OR " German" IN m.languages OR " German " IN m.languages
+OR "German " IN m.languages return p.name, labels(p), m.title, m.languages
+
+- MATCH (p:Person) WHERE p.name STARTS WITH 'Robert' RETURN p.name
+
+EXPLAIN is the correct answer. It does not execute the query, but does return the query plan that will show if an index will be used.
+
+- MATCH (m:Movie) WHERE toUpper(m.title) STARTS WITH 'LIFE IS' RETURN m.title
+
+- MATCH (p:Person)-[:ACTED_IN]->(m:Movie) WHERE  p.name = "Clint Eastwood" AND exists { (p)-[:DIRECTED]→(m) } RETURN  m.title
+
+PROFILE. It provides both the execution plan and the db hits when the query executes.
+
+- MATCH (movie:Movie {title:'Toy Story'})<-[:ACTED_IN]-(actor:Person) RETURN collect(actor.name) AS actors
+
+- MATCH (d:Director)-[:DIRECTED]-(m) RETURN d.name AS Director, count(*) AS numMovies ORDER BY numMovies DESC LIMIT 5
+
+- MATCH (a:Actor)-[:ACTED_IN]->(m:Movie) RETURN m.title AS movie, collect(a.name) AS actors, size(collect(a.name)) AS num ORDER BY num DESC LIMIT 1
+
+
+
+Scope 
+-
+WITH  'Clint Eastwood' AS a, 'high' AS t
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WITH   p, m, toLower(m.title) AS movieTitle
+WHERE p.name = a
+AND movieTitle CONTAINS t
+RETURN p.name AS actor, m.title AS movie
+
+- 
+WITH 'Tom Hanks' as theActor MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+where p.name=theActor with m LIMIT 2
+RETURN m.title as movies
+
+-
+WITH  'Tom Hanks' AS theActor
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE p.name = theActor
+AND m.revenue IS NOT NULL
+WITH m ORDER BY m.revenue DESC LIMIT 1
+RETURN m.revenue AS revenue, m.title AS title
+
+-
+MATCH (n:Movie)
+WHERE n.imdbRating IS NOT NULL AND n.poster IS NOT NULL
+WITH n {
+  .title,
+  .imdbRating,
+  actors: [ (n)<-[:ACTED_IN]-(p) | p { tmdbId:p.imdbId, .name } ],
+  genres: [ (n)-[:IN_GENRE]->(g) | g {.name}]
+}
+ORDER BY n.imdbRating DESC
+LIMIT 4
+RETURN collect(n)
+
+-
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE p.name = 'Keanu Reeves'
+WITH m  LIMIT 3
+MATCH (d:Person)-[:DIRECTED]->(m)
+RETURN collect(d.name) AS directors,
+m.title AS movies
+
+The variable, m must be carried forward so it can be used in the RETURN clause.
+
+- 
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)<-[r:RATED]-(:User)
+WHERE p.name = 'Tom Hanks'
+WITH m, avg(r.rating) AS avgRating
+WHERE avgRating > 4
+RETURN m.title AS Movie, avgRating AS `AverageRating`
+ORDER BY avgRating DESC
+
+-
+MATCH (m:Movie)
+UNWIND m.countries AS country
+WITH m, trim(country) AS trimmedCountry
+// this automatically, makes the trimmedCountry distinct because it's a grouping key
+WITH trimmedCountry, collect(m.title) AS movies
+RETURN trimmedCountry, size(movies)
+
+-
+MATCH (u:User)
+CALL {
+WITH u
+    MATCH (m:Movie)<-[r:RATED]-(u)
+     WHERE r.rating = 5
+    RETURN m
+}
+RETURN m.title, count(m) AS numReviews
+ORDER BY numReviews DESC
+
